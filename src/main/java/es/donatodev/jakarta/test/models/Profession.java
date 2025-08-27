@@ -3,6 +3,13 @@ package es.donatodev.jakarta.test.models;
 public class Profession {
     private Long id;
     private String name;
+    
+    public Profession() {
+    }
+    public Profession(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
     public Long getId() {
         return id;
     }

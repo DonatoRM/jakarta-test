@@ -17,12 +17,12 @@ public class UsersRepository implements RepositoryDB<User> {
     }
 
     @Override
-    public void save(User t) {
+    public User save(User t) {
         throw new UnsupportedOperationException("Unimplemented method 'save'");
     }
 
     @Override
-    public void delete(Long id) {
+    public boolean delete(Long id) {
         throw new UnsupportedOperationException("Unimplemented method 'delete'");
     }
 

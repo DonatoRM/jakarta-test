@@ -6,6 +6,16 @@ public class User {
     private String lastName;
     private String middleLastName;
     private Profession profession;
+    
+    public User() {
+    }
+    public User(Long id, String name, String lastName, String middleLastName, Profession profession) {
+        this.id = id;
+        this.name = name;
+        this.lastName = lastName;
+        this.middleLastName = middleLastName;
+        this.profession = profession;
+    }
     public Long getId() {
         return id;
     }

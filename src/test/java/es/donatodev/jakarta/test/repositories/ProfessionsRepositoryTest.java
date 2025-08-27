@@ -1,90 +1,79 @@
 package es.donatodev.jakarta.test.repositories;
-
 import es.donatodev.jakarta.test.models.Profession;
-import es.donatodev.jakarta.test.utils.DBConector;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
-import java.sql.*;
-import java.util.List;
+import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-
-
-
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProfessionsRepositoryTest {
 
-    @Test
-    void testListAllReturnsProfessions() throws Exception {
-        // Arrange
-        Statement mockStatement = mock(Statement.class);
-        ResultSet mockResultSet = mock(ResultSet.class);
-        Connection mockConnection = mock(Connection.class);
+    @Mock
+    private ProfessionsRepository repository;
 
-        when(mockConnection.createStatement()).thenReturn(mockStatement);
-        when(mockStatement.executeQuery(anyString())).thenReturn(mockResultSet);
-
-        // Simulate two rows
-        when(mockResultSet.next()).thenReturn(true, true, false);
-        when(mockResultSet.getLong("id")).thenReturn(1L, 2L);
-        when(mockResultSet.getString("name")).thenReturn("Engineer", "Doctor");
-
-        // Mock DBConector.getConnection()
-        try (MockedStatic<DBConector> dbConectorMock = mockStatic(DBConector.class)) {
-            dbConectorMock.when(DBConector::getConnection).thenReturn(mockConnection);
-
-            ProfessionsRepository repo = new ProfessionsRepository();
-
-            // Act
-            List<Profession> professions = repo.listAll();
-
-            // Assert
-            assertNotNull(professions);
-            assertEquals(2, professions.size());
-            assertEquals(1L, professions.get(0).getId());
-            assertEquals("Engineer", professions.get(0).getName());
-            assertEquals(2L, professions.get(1).getId());
-            assertEquals("Doctor", professions.get(1).getName());
-        }
+    @BeforeAll
+    void initMocks() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testListAllReturnsNullWhenNoRows() throws Exception {
-        Statement mockStatement = mock(Statement.class);
-        ResultSet mockResultSet = mock(ResultSet.class);
-        Connection mockConnection = mock(Connection.class);
+    void testListAll() {
+        List<Profession> mockProfessions = Arrays.asList(
+            new Profession(1L, "Engineer"),
+            new Profession(2L, "Doctor")
+        );
+        when(repository.listAll()).thenReturn(mockProfessions);
 
-        when(mockConnection.createStatement()).thenReturn(mockStatement);
-        when(mockStatement.executeQuery(anyString())).thenReturn(mockResultSet);
+        List<Profession> professions = repository.listAll();
+        assertNotNull(professions);
+        assertEquals(2, professions.size());
+        assertEquals("Engineer", professions.get(0).getName());
+        assertEquals("Doctor", professions.get(1).getName());
+    }
+    @Test
+    void testSearchById() {
+        Profession mockProfession = new Profession(1L, "Engineer");
+        when(repository.searchById(1L)).thenReturn(mockProfession);
 
-        // Simulate no rows
-        when(mockResultSet.next()).thenReturn(false);
-
-        try (MockedStatic<DBConector> dbConectorMock = mockStatic(DBConector.class)) {
-            dbConectorMock.when(DBConector::getConnection).thenReturn(mockConnection);
-
-            ProfessionsRepository repo = new ProfessionsRepository();
-
-            List<Profession> professions = repo.listAll();
-
-            assertNull(professions);
-        }
+        Profession profession = repository.searchById(1L);
+        assertNotNull(profession);
+        assertEquals("Engineer", profession.getName());
     }
 
     @Test
-    void testListAllHandlesSQLException() throws Exception {
-        Connection mockConnection = mock(Connection.class);
+    void testSaveInsert() {
+        Profession newProfession = new Profession(null, "Artist");
+        Profession savedProfession = new Profession(3L, "Artist");
+        when(repository.save(newProfession)).thenReturn(savedProfession);
 
-        when(mockConnection.createStatement()).thenThrow(new SQLException("DB error"));
+        Profession saved = repository.save(newProfession);
+        assertNotNull(saved.getId());
+        assertEquals("Artist", saved.getName());
+    }
 
-        try (MockedStatic<DBConector> dbConectorMock = mockStatic(DBConector.class)) {
-            dbConectorMock.when(DBConector::getConnection).thenReturn(mockConnection);
+    @Test
+    void testSaveUpdate() {
+        Profession profession = new Profession(1L, "Architect");
+        when(repository.save(profession)).thenReturn(profession);
 
-            ProfessionsRepository repo = new ProfessionsRepository();
+        Profession updated = repository.save(profession);
+        assertEquals("Architect", updated.getName());
+    }
 
-            List<Profession> professions = repo.listAll();
+    @Test
+    void testDelete() {
+        when(repository.delete(1L)).thenReturn(true);
 
-            assertNull(professions);
-        }
+        boolean deleted = repository.delete(1L);
+        assertTrue(deleted);
+    }
+
+    @Test
+    void testDeleteNonExisting() {
+        when(repository.delete(9999L)).thenReturn(false);
+
+        boolean deleted = repository.delete(9999L);
+        assertFalse(deleted);
     }
 }

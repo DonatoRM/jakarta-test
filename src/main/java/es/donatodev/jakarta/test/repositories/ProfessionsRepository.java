@@ -32,7 +32,7 @@ public class ProfessionsRepository implements RepositoryDB<Profession> {
 
     
     @Override
-    public void delete(Long id) {
+    public boolean delete(Long id) {
         if(id>0) {
             Profession professionSearch=searchById(id);
             if(professionSearch!=null) {
@@ -42,13 +42,42 @@ public class ProfessionsRepository implements RepositoryDB<Profession> {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
+                return true;
             }
         }
+        return false;
     }
     
     @Override
-    public void save(Profession t) {
-       // TODO: Hacer para el próximo día        
+    public Profession save(Profession seletedProfession) {
+       final String SQL_INSERT="INSERT INTO professions(name) VALUES(?)";
+       final String SQL_UPDATE="UPDATE professions SET name=? WHERE id=?";
+       if(seletedProfession!=null) {
+            if(seletedProfession.getId()!=null && seletedProfession.getId()>0 && searchById(seletedProfession.getId())!=null) {
+                //Update
+                try(PreparedStatement stmt=DBConector.getConnection().prepareStatement(SQL_UPDATE)) {
+                    stmt.setString(1, seletedProfession.getName());
+                    stmt.setLong(2, seletedProfession.getId());
+                    stmt.executeUpdate();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                //Insert
+                try(PreparedStatement stmt=DBConector.getConnection().prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+                    stmt.setString(1, seletedProfession.getName());
+                    stmt.executeUpdate();
+                    try(ResultSet rs=stmt.getGeneratedKeys()) {
+                        if(rs.next()) {
+                            seletedProfession.setId(rs.getLong(1));
+                        }
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+       }
+       return seletedProfession;       
     }
     
     @Override
